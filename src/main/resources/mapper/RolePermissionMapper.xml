@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.neepa.mapper.RolePermissionMapper">
+    <sql id="selectRolePermission">
+        select rp.id,rp.remarks,rp.permission_id,rp.role_id,
+               p.id as p_id,p.name as p_name,p.remarks as p_remarks,
+               r.id as r_id,r.name as r_name,r.remarks as r_remarks
+        from role_permission rp
+        left join permission p on rp.permission_id = p.id
+        left join role r on rp.role_id = r.id
+    </sql>
+    <resultMap id="PermissionResult" type="com.neepa.entity.Permission">
+        <id property="id" column="p_id"/>
+        <result property="name" column="p_name"/>
+        <result property="remarks" column="p_remarks"/>
+    </resultMap>
+    <select id="selectPermissionList" resultMap="PermissionResult">
+        <include refid="selectRolePermission"/>
+        <where>
+            <if test="rolePerm.id != null">
+                AND rp.id = ${rolePerm.id}
+            </if>
+            <if test="rolePerm.roleId!=null">
+                AND rp.role_id = ${rolePerm.roleId}
+            </if>
+            <if test="rolePerm.permissionId!=null">
+                AND rp.permission_id = ${rolePerm.permissionId}
+            </if>
+            <if test="rolePerm.remarks!=null and rolePerm.remarks!=''">
+                AND rp.remarks LIKE '%${rolePerm.remarks}%'
+            </if>
+        </where>
+    </select>
+</mapper>

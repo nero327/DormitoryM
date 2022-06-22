@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.neepa.mapper.RoleMapper">
+    <sql id="selectRole">
+        select r.id,r.remarks,r.name
+        from role r
+    </sql>
+    <select id="selectRoleList" resultType="com.neepa.entity.Role">
+        <include refid="selectRole"/>
+        <where>
+            <if test="role.id!=null">
+                AND r.id = ${role.id}
+            </if>
+            <if test="role.remarks!=null and role.remarks!=''">
+                AND r.remarks LIKE '%${role.remarks}%'
+            </if>
+            <if test="role.name!=null and role.name!=''">
+                AND r.name LIKE '%${role.name}%'
+            </if>
+        </where>
+    </select>
+</mapper>

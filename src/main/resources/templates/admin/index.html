@@ -1,0 +1,142 @@
+<!doctype html>
+<html class="x-admin-sm" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head th:replace="~{fragment/base::head(~{::title},~{},~{})}"></head>
+<title>宿舍管理系统 首页</title>
+    <body class="index">
+        <!-- 顶部开始 -->
+        <div class="container">
+            <div class="logo">
+                <a th:href="@{/admin}">宿舍管理系统</a></div>
+            <ul class="layui-nav right" lay-filter="">
+                <li class="layui-nav-item">
+                    <a href="javascript:;">[[${session.loginStaffName}]]</a>
+                    <dl class="layui-nav-child">
+                        <dd><a th:href="@{/admin/login}">切换账号</a></dd>
+                        <dd><a th:href="@{/logout}">注销</a></dd>
+                    </dl>
+                </li>
+            </ul>
+        </div>
+        <!-- 顶部结束 -->
+        <!-- 中部开始 -->
+        <!-- 左侧菜单开始 -->
+        <div class="left-nav">
+            <div id="side-nav">
+                <ul id="nav">
+                    <shiro:hasRole name="msg">
+                        <li>
+                            <a onclick="xadmin.add_tab('通知管理','/admin/message')">
+                                <i class="iconfont left-nav-li" lay-tips="通知管理">&#xe69f;</i>
+                                <cite>通知管理</cite>
+                                <i class="iconfont nav_right">&#xe697;</i>
+                            </a>
+                        </li>
+                    </shiro:hasRole>
+                    <shiro:hasRole name="repair">
+                        <li>
+                            <a onclick="xadmin.add_tab('报修管理','/admin/repair')">
+                                <i class="iconfont left-nav-li" lay-tips="报修管理">&#xe6cb;</i>
+                                <cite>报修管理</cite>
+                                <i class="iconfont nav_right">&#xe697;</i>
+                            </a>
+                        </li>
+                    </shiro:hasRole>
+                    <shiro:hasRole name="building">
+                        <li>
+                            <a onclick="xadmin.add_tab('宿舍楼管理','/admin/building')">
+                                <i class="iconfont left-nav-li" lay-tips="宿舍楼管理">&#xe6d7;</i>
+                                <cite>宿舍楼管理</cite>
+                                <i class="iconfont nav_right">&#xe697;</i>
+                            </a>
+                        </li>
+                    </shiro:hasRole>
+                    <shiro:hasRole name="dormitory">
+                        <li>
+                            <a onclick="xadmin.add_tab('房间管理','/admin/dormitory')">
+                                <i class="iconfont left-nav-li" lay-tips="房间管理">&#xe722;</i>
+                                <cite>房间管理</cite>
+                                <i class="iconfont nav_right">&#xe697;</i>
+                            </a>
+                        </li>
+                    </shiro:hasRole>
+                    <shiro:hasRole name="student">
+                        <li>
+                            <a onclick="xadmin.add_tab('学生管理','/admin/student')">
+                                <i class="iconfont left-nav-li" lay-tips="学生管理">&#xe6b8;</i>
+                                <cite>学生管理</cite>
+                                <i class="iconfont nav_right">&#xe697;</i>
+                            </a>
+                        </li>
+                    </shiro:hasRole>
+                    <shiro:hasRole name="dept">
+                        <li>
+                            <a onclick="xadmin.add_tab('部门管理','/admin/department')">
+                                <i class="iconfont left-nav-li" lay-tips="部门管理">&#xe6f5;</i>
+                                <cite>部门管理</cite>
+                                <i class="iconfont nav_right">&#xe697;</i>
+                            </a>
+                        </li>
+                    </shiro:hasRole>
+                    <shiro:hasAnyRoles  name="staff,role,perm">
+                        <li>
+                            <a href="javascript:;">
+                                <i class="iconfont left-nav-li" lay-tips="管理员管理">&#xe726;</i>
+                                <cite>管理员管理</cite>
+                                <i class="iconfont nav_right">&#xe697;</i></a>
+                            <ul class="sub-menu">
+                                <shiro:hasRole name="staff">
+                                    <li>
+                                        <a onclick="xadmin.add_tab('员工管理','/admin/staff')">
+                                            <i class="iconfont">&#xe6a7;</i>
+                                            <cite>员工管理</cite>
+                                        </a>
+                                    </li>
+                                </shiro:hasRole>
+                                <shiro:hasRole name="role">
+                                    <li>
+                                        <a onclick="xadmin.add_tab('角色管理','/admin/role')">
+                                            <i class="iconfont">&#xe6a7;</i>
+                                            <cite>角色管理</cite></a>
+                                    </li>
+                                </shiro:hasRole>
+                                <shiro:hasRole name="perm">
+                                    <li>
+                                        <a onclick="xadmin.add_tab('权限管理','/admin/perm')">
+                                            <i class="iconfont">&#xe6a7;</i>
+                                            <cite>权限管理</cite></a>
+                                    </li>
+                                </shiro:hasRole>
+                            </ul>
+                        </li>
+                    </shiro:hasAnyRoles>
+                </ul>
+            </div>
+        </div>
+        <!-- <div class="x-slide_left"></div> -->
+        <!-- 左侧菜单结束 -->
+        <!-- 右侧主体开始 -->
+        <div class="page-content">
+            <div class="layui-tab tab" lay-filter="xbs_tab" lay-allowclose="false">
+                <ul class="layui-tab-title">
+                    <li class="home">
+                        <i class="layui-icon">&#xe68e;</i>我的桌面</li></ul>
+                <div class="layui-unselect layui-form-select layui-form-selected" id="tab_right">
+                    <dl>
+                        <dd data-type="this">关闭当前</dd>
+                        <dd data-type="other">关闭其它</dd>
+                        <dd data-type="all">关闭全部</dd></dl>
+                </div>
+                <div class="layui-tab-content">
+                    <div class="layui-tab-item layui-show">
+                        <iframe th:src='@{/admin/welcome}' frameborder="0" scrolling="yes" class="x-iframe"></iframe>
+                    </div>
+                </div>
+                <div id="tab_show"></div>
+            </div>
+        </div>
+        <div class="page-content-bg"></div>
+        <style id="theme_style"></style>
+        <!-- 右侧主体结束 -->
+        <!-- 中部结束 -->
+    </body>
+</html>

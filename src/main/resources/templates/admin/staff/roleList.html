@@ -1,0 +1,97 @@
+<!doctype html>
+<html  class="x-admin-sm" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragment/base::head(~{::title},~{},~{})}"></head>
+<title>宿舍管理系统 首页</title>
+<body>
+<div class="x-nav">
+    <a class="layui-btn layui-btn-small" style="line-height:1.6em;margin-top:3px;float:right" onclick="location.reload()" title="刷新">
+        <i class="layui-icon layui-icon-refresh" style="line-height:30px"></i>
+    </a>
+</div>
+<div class="layui-fluid">
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-body">
+                    <table id="role-table" lay-filter="role-table"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+
+<script type="text/html" id="toolbar">
+    <button class="layui-btn" lay-event="add"><i class="layui-icon"></i></button>
+</script>
+<script>
+    layui.use(['table','form'], function(){
+        var table = layui.table,
+        form=layui.form;
+
+        table.render({
+            elem: '#role-table'
+            ,height: 520
+            ,url: '/admin/role/list' //数据接口
+            ,page: true //开启分页
+            ,toolbar: '#toolbar'
+            ,cols: [
+                [
+                {type: 'checkbox', fixed: 'left'}
+                ,{field: 'id', width: 150, title: '角色编号', sort:true}
+                ,{field: 'name', title: '角色名称', }
+                ,{field: 'remarks', title: '角色描述', sort:true}
+            ]
+            ]
+            ,
+            response:{
+                statusName:'code', //规定返回的状态码字段为code
+                statusCode:200 //规定成功的状态码味200
+            }
+        });
+        table.on('toolbar(role-table)', function(obj){
+            var checkStatus = table.checkStatus(obj.config.id)
+                ,data = checkStatus.data; //获取选中的数据
+            switch(obj.event){
+                case 'add':
+                    var d = []
+                    for (let i in data) {
+                        d.push({
+                           "staffId": "[[${staffId}]]",
+                            "roleId": data[i].id
+                        });
+                    }
+                    $.ajax({
+                        type : "POST",
+                        dataType : "json",
+                        url : "/admin/staff/role",
+                        data: {
+                            sr: JSON.stringify(d)
+                        },
+                        success : function(data) {
+                            if(data.code==200){
+                                layer.alert(data.msg, {
+                                        icon: 1
+                                    },
+                                    function() {
+                                        // 可以对父窗口进行刷新
+                                        xadmin.father_reload();
+                                        obj.del(); //删除对应行（tr）的DOM结构
+                                    });
+                            }else {
+                                layer.alert(data.msg, {
+                                        icon: 2
+                                    },
+                                    function() {
+                                        // 可以对父窗口进行刷新
+                                        xadmin.father_reload();
+                                    });
+                            }
+                        }
+                    });
+                    break;
+            };
+        });
+    });
+</script>
+</html>

@@ -1,0 +1,145 @@
+<!doctype html>
+<html  class="x-admin-sm" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragment/base::head(~{::title},~{},~{})}"></head>
+<title>宿舍管理系统</title>
+<body>
+<div class="layui-fluid">
+    <div class="layui-row">
+        <form class="layui-form">
+            <div class="layui-form-item">
+                <label for="buildingId" class="layui-form-label">
+                    <span class="x-red">*</span>所属宿舍楼
+                </label>
+                <div class="layui-input-inline">
+                    <select name="buildingId" id="buildingId" lay-filter="building" lay-verify="required">
+                        <option value="0"></option>
+                        <option th:each="building :${buildingList}" th:value="${building.getId()}">[[${building.getName()}]]</option>
+                    </select>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label for="floor" class="layui-form-label">
+                    <span class="x-red">*</span>宿舍楼层
+                </label>
+                <div class="layui-input-inline">
+                    <select name="floor" id="floor" lay-filter="floor" required="">
+                    </select>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label for="switch" class="layui-form-label">
+                    <span class="x-red">*</span> 批量添加/单个添加
+                </label>
+                <div class="layui-input-inline">
+                    <input type="checkbox" id="switch" name="switch" lay-skin="switch" lay-text="批量|单个" checked lay-filter="switch">
+                </div>
+            </div>
+            <div class="layui-form-item" id="form-count">
+                <label for="count" class="layui-form-label">
+                    <span>-</span>每层房间数
+                </label>
+                <div class="layui-input-inline">
+                    <input type="text" id="count" name="count" required=""
+                           autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item" id="form-number">
+                <label for="number" class="layui-form-label">
+                    <span>-</span> 宿舍房
+                </label>
+                <div class="layui-input-inline">
+                    <input type="text" id="number" name="number" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label for="max" class="layui-form-label">
+                    <span class="x-red">*</span> 可住人数
+                </label>
+                <div class="layui-input-inline">
+                    <input type="text" id="max" name="max" lay-verify="required|number" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label for="max" class="layui-form-label"></label>
+                <button  class="layui-btn" lay-filter="add" lay-submit="">
+                    增加
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+    $(document).ready(function(){
+        $("#form-number").css("display","none");
+    });
+    layui.use(['form', 'layer'],
+    function() {
+        $ = layui.jquery;
+        var form = layui.form,
+            layer = layui.layer;
+        form.on('select(building)',function(data){
+            $.getJSON("getFloorsByBuildingId?id="+data.value, function(data){
+                var optionstring = "";
+                for (let i = 1; i <= data.data; i++) {
+                    optionstring += "<option value=\"" + i + "\" >" + i + "</option>";
+                }
+                $("#floor").html('<option value=""></option>' + optionstring);
+                form.render('select'); //这个很重要
+            });
+        });
+        //监听提交
+        form.on('submit(add)',
+            function() {
+                $.ajax({
+                    type : "POST",
+                    dataType : "json",
+                    url : "/admin/dormitory",
+                    data : {
+                        "buildingId": $("#buildingId").val(),
+                        "floor": $("#floor").val(),
+                        "count": $("#count").val(),
+                        "number": $("#number").val(),
+                        "max": $("#max").val(),
+                    },
+                    success : function(data) {
+                        console.log(data);
+                        if(data.code==200){
+                            layer.alert(data.msg, {
+                                    icon: 1
+                                },
+                                function() {
+                                    //关闭当前frame
+                                    xadmin.close();
+                                    // 可以对父窗口进行刷新
+                                    xadmin.father_reload();
+                                });
+                        }else {
+                            layer.alert(data.msg, {
+                                    icon: 2
+                                },
+                                function() {
+                                    //关闭当前frame
+                                    xadmin.close();
+                                    // 可以对父窗口进行刷新
+                                    xadmin.father_reload();
+                                });
+                        }
+                    }
+                });
+                return false;
+            });
+
+        form.on('switch(switch)',function (data) {
+            checked=data.elem.checked;
+            if(checked){
+                $("#form-count").css("display","block");
+                $("#form-number").css("display","none");
+            }else{
+                $("#form-number").css("display","block");
+                $("#form-count").css("display","none");
+            }
+        });
+
+    });</script>
+</body>
+</html>

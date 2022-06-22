@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.neepa.mapper.RepairMapper">
+    <resultMap id="RepairVOResult" type="com.neepa.vo.RepairVO">
+        <id     property="id"            column="id"         />
+        <result property="description"   column="description"/>
+        <result property="fee"           column="fee"        />
+        <result property="status"        column="status"     />
+        <result property="createTime"    column="create_time"/>
+        <result property="updateTime"    column="update_time"/>
+        <association property="student"  column="student_id" javaType="com.neepa.vo.StudentVO" resultMap="StudentResult"/>
+        <association property="staff"    column="staff_id" javaType="com.neepa.vo.StaffVO" resultMap="StaffResult"/>
+    </resultMap>
+    
+    <resultMap id="StudentResult" type="StudentVO">
+        <id property="id" column="student_id"/>
+        <result property="name" column="studentName"/>
+        <result property="phone" column="studentPhone"/>
+        <result property="dormitoryId" column="dormitory_id"/>
+        <result property="floor" column="floor"/>
+        <result property="number" column="number"/>
+        <result property="buildingId" column="building_id"/>
+        <result property="buildingName" column="buildingName"/>
+    </resultMap>
+    <resultMap id="StaffResult" type="StaffVO">
+        <id property="id" column="staff_id"/>
+        <result property="name" column="staffName"/>
+        <result property="phone" column="staffPhone"/>
+        <result property="departmentId" column="departmentId"/>
+        <result property="departmentName" column="departmentName"/>
+    </resultMap>
+    <resultMap id="CountStatusResult" type="java.util.HashMap">
+        <result property="status" column="status"/>
+        <result property="count" column="count"/>
+    </resultMap>
+    <sql id="selectRepairVO">
+        select r.*,s.name as staffName,s.phone as staffPhone,s.department_id as departmentId,d.name as departmentName,s2.id, s2.name as studentName, s2.phone as studentPhone, s2.dormitory_id, d2.id as dormitoryId, floor, number, building_id, b.name as buildingName
+        from repair r
+        left join staff s on r.staff_id = s.id
+        left join department d on s.department_id = d.id
+        left join student s2 on r.student_id = s2.id
+        left join dormitory d2 on s2.dormitory_id = d2.id
+        left join building b on d2.building_id = b.id
+    </sql>
+    <select id="selectRepairVoList" resultMap="RepairVOResult">
+        <include refid="selectRepairVO"/>
+        <where>
+            <if test="repair.status != null and repair.status != ''">
+                AND r.status = ${repair.status}
+            </if>
+            <if test="repair.student != null and repair.student.id != null and repair.student.id !=''">
+                AND r.student_id = ${repair.student.id}
+            </if>
+            <if test="repair.staff != null and repair.staff.id != null and repair.staff.id !='' and repair.status != null and repair.status != 100 ">
+                AND r.staff_id = ${repair.staff.id}
+            </if>
+        </where>
+    </select>
+    <select id="selectCountByStatus" resultMap="CountStatusResult">
+        select status,count(status) as count
+        from repair
+        where status = 100
+        group by status
+        union
+        select status,count(status) as count
+        from repair
+        <where>
+            <if test="id != null and id != '' and id lt 100000000">
+                staff_id = ${id} AND status != 100
+            </if>
+            <if test="id != null and id != '' and id gte 100000000">
+                student_id = ${id}
+            </if>
+        </where>
+        group by status
+    </select>
+</mapper>

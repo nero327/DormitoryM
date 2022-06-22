@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.neepa.mapper.MessageMapper">
+    <sql id="selectMessage">
+        select m.*,b.name as buildingName
+        from message m
+        left join building b on m.building_id = b.id
+
+    </sql>
+    <select id="selectVoListByPage" resultType="com.neepa.vo.MessageVO">
+        <include refid="selectMessage"/>
+        <if test="studentId!=null and studentId!=''">
+            left join dormitory d on b.id = d.building_id
+            left join student s on d.id = s.dormitory_id
+            <where>
+                AND s.id=${studentId}
+            </where>
+            union
+            <include refid="selectMessage"/>
+            <where>
+                AND m.building_id = 0
+            </where>
+        </if>
+    </select>
+</mapper>

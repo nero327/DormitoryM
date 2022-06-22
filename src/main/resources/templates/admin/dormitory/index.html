@@ -1,0 +1,177 @@
+<!doctype html>
+<html  class="x-admin-sm" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragment/base::head(~{::title},~{},~{})}"></head>
+<title>宿舍管理系统 首页</title>
+<body>
+<div class="x-nav">
+    <a class="layui-btn layui-btn-small" style="line-height:1.6em;margin-top:3px;float:right" onclick="location.reload()" title="刷新">
+        <i class="layui-icon layui-icon-refresh" style="line-height:30px"></i>
+    </a>
+</div>
+<div class="layui-fluid">
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-body">
+                    <form class="layui-form layui-col-space5">
+                        <div class="layui-inline layui-show-xs-block">
+                            <select name="buildingId" id="buildingId" lay-filter="building">
+                                <option value="" placeholder="所属宿舍楼"></option>
+                                <option th:each="building :${buildingList}" th:value="${building.getId()}">[[${building.getName()}]]</option>
+                            </select>
+                        </div>
+                        <div class="layui-inline layui-show-xs-block">
+                            <select name="floor" id="floor" lay-filter="floor">
+                                <option value="" placeholder="宿舍楼层"></option>
+                            </select>
+                        </div>
+                        <div class="layui-inline layui-show-xs-block">
+                            <select name="number" id="number" lay-filter="number">
+                                <option value="" placeholder="宿舍房号"></option>
+                            </select>
+                        </div>
+                        <div class="layui-inline layui-show-xs-block">
+                            <button class="layui-btn"  lay-submit="" lay-filter="sreach"><i class="layui-icon">&#xe615;</i></button>
+                        </div>
+                    </form>
+                </div>
+                <div class="layui-card-header">
+                    <button class="layui-btn" onclick="xadmin.open('添加宿舍','/admin/dormitory/create',600,400)"><i class="layui-icon"></i>添加</button>
+                    <button class="layui-btn" onclick="xadmin.open('批量删除宿舍','/admin/dormitory/delete',600,400)"><i class="layui-icon"></i>批量删除</button>
+                </div>
+                <div class="layui-card-body ">
+                    <table id="dormitory-table" lay-filter="dormitory-table"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<script type="text/html" id="toolbar">
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+<script type="text/html" id="studenttoolbar">
+    <a class="layui-btn layui-btn-xs" lay-event="lookup">查看</a>
+</script>
+<script>
+    layui.use(['table','form'], function(){
+        var table = layui.table,
+        form = layui.form;
+        table.render({
+            elem: '#dormitory-table'
+            ,height: 520
+            ,url: '/admin/dormitory/list' //数据接口
+            ,page: true //开启分页
+            ,cols: [
+                [
+                    {field: 'buildingName', title: '所属宿舍楼', fixed: 'left', sort:true}
+                    ,{field: 'floor', title: '所属楼层', sort:true}
+                    ,{field: 'number', title: '宿舍房号', sort:true}
+                    ,{field: 'max', title: '最大可住人数', }
+                    ,{field: 'available', title: '剩余可住人数', sort:true}
+                    ,{field: 'student', title: '查看宿舍学生', align:'center', toolbar: '#studenttoolbar'}
+                    ,{fixed: 'right', title: '操作', width: 165, align:'center', toolbar: '#toolbar'}
+                ]
+            ]
+            ,
+            response:{
+                statusName:'code', //规定返回的状态码字段为code
+                statusCode:200 //规定成功的状态码味200
+            }
+        });
+
+        form.on('select(building)',function(data){
+            $.getJSON("/admin/dormitory/getFloorsByBuildingId?id="+data.value, function(data){
+                var optionstring = "";
+                for (let i = 1; i <= data.data; i++) {
+                    optionstring += "<option value=\"" + i + "\" >" + i + "</option>";
+                }
+                $("#floor").html('<option value=""></option>' + optionstring);
+                form.render('select'); //这个很重要
+            });
+        });
+
+        form.on('select(floor)',function(data){
+            $.getJSON("/admin/dormitory/getNumberByInfo?floor="+data.value+"&buildingId="+$("#buildingId").val(), function(data){
+                var optionstring = "";
+                data.data.forEach(function (ele,idx) {
+                    optionstring += "<option value=\"" + ele.number + "\" >---" + ele.number + "---可住："+ele.available+"人---已住："+(ele.max-ele.available)+"人---</option>";
+                })
+                $("#number").html('<option value=""></option>' + optionstring);
+                form.render('select'); //这个很重要
+            });
+        });
+
+        table.on('tool(dormitory-table)', function(obj){ //注：tool 是工具条事件名，test 是 table 原始容器的属性 lay-filter="对应的值"
+            var data = obj.data //获得当前行数据
+                ,layEvent = obj.event; //获得 lay-event 对应的值
+            if(layEvent === 'del'){
+                layer.confirm('真的删除行么', function(index){
+                    //向服务端发送删除指令
+                    $.ajax({
+                        type : "DELETE",
+                        dataType : "json",
+                        url : "/admin/dormitory/"+data.id,
+                        success : function(data) {
+                            if(data.code==200){
+                                layer.alert(data.msg, {
+                                        icon: 1
+                                    },
+                                    function() {
+                                        // 可以对父窗口进行刷新
+                                        xadmin.father_reload();
+                                        obj.del(); //删除对应行（tr）的DOM结构
+                                    });
+                            }else {
+                                layer.alert(data.msg, {
+                                        icon: 2
+                                    },
+                                    function() {
+                                        // 可以对父窗口进行刷新
+                                        xadmin.father_reload();
+                                    });
+                            }
+                        }
+                    });
+
+                });
+            }else if(layEvent === 'lookup'){
+                xadmin.open('查看宿舍学生','/admin/dormitory/'+data.id+'/student')
+            }
+        });
+
+        form.on('submit(sreach)',function (data) {
+            table.render({
+                elem: '#dormitory-table'
+                ,height: 520
+                ,url: '/admin/dormitory/list' //数据接口
+                ,where: {
+                    "buildingId": $("#buildingId").val(),
+                    "floor": $("#floor").val(),
+                    "number": $("#number").val(),
+                }
+                ,page: true //开启分页
+                ,cols: [
+                    [
+                        {field: 'buildingName', title: '所属宿舍楼', fixed: 'left', sort:true}
+                        ,{field: 'floor', title: '所属楼层', sort:true}
+                        ,{field: 'number', title: '宿舍房号', sort:true}
+                        ,{field: 'max', title: '最大可住人数', }
+                        ,{field: 'available', title: '剩余可住人数', sort:true}
+                        ,{field: 'student', title: '查看宿舍学生', align:'center', toolbar: '#studenttoolbar'}
+                        ,{fixed: 'right', title: '操作', width: 165, align:'center', toolbar: '#toolbar'}
+                    ]
+                ]
+                ,
+                response:{
+                    statusName:'code', //规定返回的状态码字段为code
+                    statusCode:200 //规定成功的状态码味200
+                }
+            });
+            return false;
+        });
+
+    });
+
+</script>
+</html>

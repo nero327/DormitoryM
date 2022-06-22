@@ -1,0 +1,23 @@
+<!doctype html>
+<html  class="x-admin-sm" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragment/base::head(~{::title},~{},~{})}"></head>
+<title>宿舍管理系统 登录</title>
+<body class="login-bg">
+    
+    <div class="login layui-anim layui-anim-up">
+        <div class="message">宿舍系统学生端登录</div>
+        <div id="darkbannerwrap"></div>
+        <div class="x-red" th:if="${msg} != null"><i class="layui-icon">&#xe702;</i>[[${msg}]]</div>
+        <form method="post" class="layui-form" th:action="@{/login}">
+            <input name="username" placeholder="用户名"  type="text" lay-verify="required" class="layui-input" >
+            <hr class="hr15">
+            <input name="password" lay-verify="required" placeholder="密码"  type="password" class="layui-input">
+            <hr class="hr15">
+            <input value="登录" lay-submit lay-filter="login" style="width:100%;" type="submit">
+            <hr class="hr20" >
+        </form>
+    </div>
+
+    <!-- 底部结束 -->
+</body>
+</html>

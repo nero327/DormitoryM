@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.neepa.mapper.PermissionMapper">
+    <sql id="selectPermission">
+        select *
+        from permission
+    </sql>
+    <select id="selectPermissionList" parameterType="com.neepa.entity.Permission" resultType="com.neepa.entity.Permission">
+        <include refid="selectPermission"/>
+        <where>
+            <if test="perm.id!=null and perm.id!=''">
+                AND id = ${perm.id}
+            </if>
+            <if test="perm.name!=null and perm.name!=''">
+                AND name LIKE '%${perm.name}%'
+            </if>
+            <if test="perm.remarks!=null and perm.remarks!=''">
+                AND remarks LIKE '%${perm.remarks}%'
+            </if>
+        </where>
+    </select>
+</mapper>

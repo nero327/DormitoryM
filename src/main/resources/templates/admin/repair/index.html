@@ -1,0 +1,470 @@
+<!doctype html>
+<html  class="x-admin-sm" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragment/base::head(~{::title},~{},~{})}"></head>
+<title>宿舍管理系统 首页</title>
+<body>
+<div class="x-nav">
+    <a class="layui-btn layui-btn-small" style="line-height:1.6em;margin-top:3px;float:right" onclick="location.reload()" title="刷新">
+        <i class="layui-icon layui-icon-refresh" style="line-height:30px"></i>
+    </a>
+</div>
+<div class="layui-fluid">
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-tab layui-tab-card" lay-filter="tab">
+                    <ul class="layui-tab-title">
+                        <li class="layui-this">工单待确认<span class="layui-badge layui-bg-blue" lay-filter="unconfirmed" id="100">0</span></li>
+                        <li>待处理<span class="layui-badge layui-bg-blue" lay-filter="unhandled" id="101">0</span></li>
+                        <li>已处理<span class="layui-badge layui-bg-green" lay-filter="handled" id="200">0</span></li>
+                        <li>问题申诉<span class="layui-badge" lay-filter="reported" id="202">0</span></li>
+                        <li>已完成<span class="layui-badge layui-bg-green" lay-filter="finished" id="400">0</span></li>
+                        <li>撤回待确认<span class="layui-badge layui-bg-blue" lay-filter="withdrawn" id="404">0</span></li>
+                    </ul>
+                    <div class="layui-tab-content">
+                        <div class="layui-tab-item layui-show"><table id="unconfirmed-table" lay-filter="unconfirmed-table"></table></div>
+                        <div class="layui-tab-item"><table id="unhandled-table" lay-filter="unhandled-table"></table></div>
+                        <div class="layui-tab-item"><table id="handled-table" lay-filter="handled-table"></table></div>
+                        <div class="layui-tab-item"><table id="reported-table" lay-filter="reported-table"></table></div>
+                        <div class="layui-tab-item"><table id="finished-table" lay-filter="finished-table"></table></div>
+                        <div class="layui-tab-item"><table id="withdrawn-table" lay-filter="withdrawn-table"></table></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<script type="text/html" id="unconfirmed-toolbar">
+    <a class="layui-btn layui-btn-xs" lay-event="confirm">确认</a>
+</script>
+<script type="text/html" id="unhandled-toolbar">
+    <a class="layui-btn layui-btn-xs" lay-event="confirm">完成</a>
+</script>
+<script type="text/html" id="reported-toolbar">
+    <a class="layui-btn layui-btn-xs" lay-event="confirm">确认</a>
+</script>
+<script type="text/html" id="withdrawn-toolbar">
+    <a class="layui-btn layui-btn-xs" lay-event="confirm">确认</a>
+</script>
+
+<script>
+    layui.use(['table','element'], function(){
+        tabnavReload();
+        var table = layui.table;
+        var element = layui.element;
+        table.render({
+            elem: '#unconfirmed-table'
+            ,height: 520
+            ,url: '/admin/repair/list' //数据接口
+            ,page: true //开启分页
+            ,where: {
+                      "status": 100,
+                    "staff.id": '[[${session.loginStaffId}]]'
+                 }
+            ,cols: [
+                [
+                    {field: 'id', width: 150, title: '工单编号', fixed: 'left'}
+                    ,{field: 'student', title: '学生姓名',templet: function(d){
+                        return d.student.name
+                    }}
+                    ,{field: 'student', title: '联系方式',templet: function(d){
+                        return d.student.phone
+                    }}
+                    ,{field: 'description', title: '问题描述'}
+                    ,{field: 'student', title: '宿舍楼',templet: function(d){
+                        return d.student.buildingName
+                    }}
+                    ,{field: 'student', title: '宿舍层',templet: function(d){
+                        return d.student.floor
+                    }}
+                    ,{field: 'student', title: '宿舍号',templet: function(d){
+                        return d.student.number
+                    }}
+                    ,{field: 'student', title: '状态',templet: function(d){
+                        return '<span class="layui-badge layui-bg-blue">'+statusShow(d.status)+'</span>'
+                    }}
+                    ,{fixed: 'right', title: '操作', width: 165, align:'center', toolbar: '#unconfirmed-toolbar'}
+                ]
+            ]
+            ,
+            response:{
+                statusName:'code', //规定返回的状态码字段为code
+                statusCode:200 //规定成功的状态码味200
+            }
+        });
+        //toolbar 确认工单
+        table.on('tool(unconfirmed-table)', function(obj){
+            var data = obj.data,layEvent = obj.event;
+            if(layEvent === 'confirm'){
+                $.ajax({
+                    type : "PUT",
+                    dataType : "json",
+                    url : "/admin/repair/"+data.id+"/confirmed",
+                    success : function(data) {
+                        if(data.code==200){
+                            layer.alert(data.msg, {icon: 1}, function() {xadmin.father_reload();});
+                        }else {
+                            layer.alert(data.msg, {icon: 2}, function() {xadmin.father_reload();});
+                        }
+                    }
+                });
+            }
+        });
+        //toolbar 处理完成
+        table.on('tool(unhandled-table)', function(obj){
+            var data = obj.data,layEvent = obj.event;
+            if(layEvent === 'confirm'){
+                if($("#fee"+data.id).val()==""){
+                    layer.alert("费用不能为空", {icon: 2});
+                    return;
+                }
+                $.ajax({
+                    type : "PUT",
+                    dataType : "json",
+                    url : "/admin/repair/"+data.id+"/handled",
+                    data: {
+                        "fee": $("#fee"+data.id).val(),
+                    },
+                    success : function(data) {
+                        if(data.code==200){
+                            layer.alert(data.msg, {icon: 1}, function() {xadmin.father_reload();});
+                        }else {
+                            layer.alert(data.msg, {icon: 2}, function() {xadmin.father_reload();});
+                        }
+                    }
+                });
+            }
+        });
+        table.on('tool(reported-table)', function(obj){
+            var data = obj.data,layEvent = obj.event;
+            if(layEvent === 'confirm'){
+                if($("#fee"+data.id).val()==""){
+                    layer.alert("费用不能为空", {icon: 2});
+                    return;
+                }
+                $.ajax({
+                    type : "PUT",
+                    dataType : "json",
+                    url : "/admin/repair/"+data.id+"/handled",
+                    data: {
+                        "fee": $("#fee"+data.id).val(),
+                    },
+                    success : function(data) {
+                        if(data.code==200){
+                            layer.alert(data.msg, {icon: 1}, function() {xadmin.father_reload();});
+                        }else {
+                            layer.alert(data.msg, {icon: 2}, function() {xadmin.father_reload();});
+                        }
+                    }
+                });
+            }
+        });
+        //toolbar 撤回工单确认
+        table.on('tool(withdrawn-table)', function(obj){
+            var data = obj.data,layEvent = obj.event;
+            if(layEvent === 'confirm'){
+                $.ajax({
+                    type : "PUT",
+                    dataType : "json",
+                    url : "/admin/repair/"+data.id+"/withdrawn",
+                    success : function(data) {
+                        if(data.code==200){
+                            layer.alert(data.msg, {icon: 1}, function() {xadmin.father_reload();});
+                        }else {
+                            layer.alert(data.msg, {icon: 2}, function() {xadmin.father_reload();});
+                        }
+                    }
+                });
+            }
+        });
+        element.on("tab(tab)",function (data) {
+            tabnavReload();
+            switch (data.index) {
+                case 0: table.render({
+                    elem: '#unconfirmed-table'
+                    ,height: 520
+                    ,url: '/admin/repair/list' //数据接口
+                    ,page: true //开启分页
+                    ,where: {
+                        "status": 100,
+                        "staff.id": '[[${session.loginStaffId}]]'
+                    }
+                    ,cols: [
+                        [
+                            {field: 'id', width: 150, title: '工单编号', fixed: 'left'}
+                            ,{field: 'student', title: '学生姓名',templet: function(d){
+                                return d.student.name
+                            }}
+                            ,{field: 'student', title: '联系方式',templet: function(d){
+                                return d.student.phone
+                            }}
+                            ,{field: 'description', title: '问题描述'}
+                            ,{field: 'student', title: '宿舍楼',templet: function(d){
+                                return d.student.buildingName
+                            }}
+                            ,{field: 'student', title: '宿舍层',templet: function(d){
+                                return d.student.floor
+                            }}
+                            ,{field: 'student', title: '宿舍号',templet: function(d){
+                                return d.student.number
+                            }}
+                            ,{field: 'student', title: '状态',templet: function(d){
+                                return '<span class="layui-badge layui-bg-blue">'+statusShow(d.status)+'</span>'
+                            }}
+                            ,{fixed: 'right', title: '操作', width: 165, align:'center', toolbar: '#unconfirmed-toolbar'}
+                        ]
+                    ]
+                    ,
+                    response:{
+                        statusName:'code', //规定返回的状态码字段为code
+                        statusCode:200 //规定成功的状态码味200
+                    }
+                });break;
+                case 1: table.render({
+                    elem: '#unhandled-table'
+                    ,height: 520
+                    ,url: '/admin/repair/list' //数据接口
+                    ,page: true //开启分页
+                    ,where: {
+                        "status": 101,
+                        "staff.id": '[[${session.loginStaffId}]]'
+                    }
+                    ,cols: [
+                        [
+                            {field: 'id', width: 150, title: '工单编号', fixed: 'left'}
+                            ,{field: 'student', title: '学生姓名',templet: function(d){
+                                return d.student.name
+                            }}
+                            ,{field: 'student', title: '联系方式',templet: function(d){
+                                return d.student.phone
+                            }}
+                            ,{field: 'description', title: '问题描述'}
+                            ,{field: 'student', title: '宿舍楼',templet: function(d){
+                                return d.student.buildingName
+                            }}
+                            ,{field: 'student', title: '宿舍层',templet: function(d){
+                                return d.student.floor
+                            }}
+                            ,{field: 'student', title: '宿舍号',templet: function(d){
+                                return d.student.number
+                            }}
+                            ,{field: 'student', title: '状态',templet: function(d){
+                                return '<span class="layui-badge layui-bg-blue">'+statusShow(d.status)+'</span>'
+                            }}
+                            ,{title: '设置费用',templet: function(d){
+                                return '<input type="number" name="fee" id="fee'+d.id+'" required lay-verify="required" placeholder="费用" autocomplete="off" class="layui-input">'
+                            }}
+                            ,{fixed: 'right', title: '操作', width: 165, align:'center', toolbar: '#unhandled-toolbar'}
+                        ]
+                    ]
+                    ,
+                    response:{
+                        statusName:'code', //规定返回的状态码字段为code
+                        statusCode:200 //规定成功的状态码味200
+                    }
+                });break;
+                case 2: table.render({
+                    elem: '#handled-table'
+                    ,height: 520
+                    ,url: '/admin/repair/list' //数据接口
+                    ,page: true //开启分页
+                    ,where: {
+                        "status": 200,
+                        "staff.id": '[[${session.loginStaffId}]]'
+                    }
+                    ,cols: [
+                        [
+                            {field: 'id', width: 150, title: '工单编号', fixed: 'left'}
+                            ,{field: 'student', title: '学生姓名',templet: function(d){
+                                return d.student.name
+                            }}
+                            ,{field: 'student', title: '联系方式',templet: function(d){
+                                return d.student.phone
+                            }}
+                            ,{field: 'description', title: '问题描述'}
+                            ,{field: 'student', title: '宿舍楼',templet: function(d){
+                                return d.student.buildingName
+                            }}
+                            ,{field: 'student', title: '宿舍层',templet: function(d){
+                                return d.student.floor
+                            }}
+                            ,{field: 'student', title: '宿舍号',templet: function(d){
+                                return d.student.number
+                            }}
+                            ,{field: 'fee', title: '收费 单位:元'}
+                            ,{field: 'student', title: '状态',templet: function(d){
+                                return '<span class="layui-badge layui-bg-blue">'+statusShow(d.status)+'</span>'
+                            }}
+                        ]
+                    ]
+                    ,
+                    response:{
+                        statusName:'code', //规定返回的状态码字段为code
+                        statusCode:200 //规定成功的状态码味200
+                    }
+                });break;
+                case 3: table.render({
+                    elem: '#reported-table'
+                    ,height: 520
+                    ,url: '/admin/repair/list' //数据接口
+                    ,page: true //开启分页
+                    ,where: {
+                        "status": 202,
+                        "staff.id": '[[${session.loginStaffId}]]'
+                    }
+                    ,cols: [
+                        [
+                            {field: 'id', width: 150, title: '工单编号', fixed: 'left'}
+                            ,{field: 'student', title: '学生姓名',templet: function(d){
+                                return d.student.name
+                            }}
+                            ,{field: 'student', title: '联系方式',templet: function(d){
+                                return d.student.phone
+                            }}
+                            ,{field: 'description', title: '问题描述'}
+                            ,{field: 'student', title: '宿舍楼',templet: function(d){
+                                return d.student.buildingName
+                            }}
+                            ,{field: 'student', title: '宿舍层',templet: function(d){
+                                return d.student.floor
+                            }}
+                            ,{field: 'student', title: '宿舍号',templet: function(d){
+                                return d.student.number
+                            }}
+                            ,{field: 'fee', title: '收费 单位:元'}
+                            ,{field: 'student', title: '状态',templet: function(d){
+                                return '<span class="layui-badge layui-bg-blue">'+statusShow(d.status)+'</span>'
+                            }}
+                            ,{title: '设置费用',templet: function(d){
+                                return '<input type="number" name="fee" id="fee'+d.id+'" required lay-verify="required" placeholder="费用" autocomplete="off" class="layui-input">'
+                            }}
+                            ,{fixed: 'right', title: '操作', width: 165, align:'center', toolbar: '#reported-toolbar'}
+                        ]
+                    ]
+                    ,
+                    response:{
+                        statusName:'code', //规定返回的状态码字段为code
+                        statusCode:200 //规定成功的状态码味200
+                    }
+                });break;
+                case 4: table.render({
+                    elem: '#finished-table'
+                    ,height: 520
+                    ,url: '/admin/repair/list' //数据接口
+                    ,page: true //开启分页
+                    ,where: {
+                        "status": 400,
+                        "staff.id": '[[${session.loginStaffId}]]'
+                    }
+                    ,cols: [
+                        [
+                            {field: 'id', width: 150, title: '工单编号', fixed: 'left'}
+                            ,{field: 'student', title: '学生姓名',templet: function(d){
+                                return d.student.name
+                            }}
+                            ,{field: 'student', title: '联系方式',templet: function(d){
+                                return d.student.phone
+                            }}
+                            ,{field: 'description', title: '问题描述'}
+                            ,{field: 'student', title: '宿舍楼',templet: function(d){
+                                return d.student.buildingName
+                            }}
+                            ,{field: 'student', title: '宿舍层',templet: function(d){
+                                return d.student.floor
+                            }}
+                            ,{field: 'student', title: '宿舍号',templet: function(d){
+                                return d.student.number
+                            }}
+                            ,{field: 'fee', title: '收费 单位:元'}
+                            ,{field: 'student', title: '状态',templet: function(d){
+                                return '<span class="layui-badge layui-bg-blue">'+statusShow(d.status)+'</span>'
+                            }}
+                        ]
+                    ]
+                    ,
+                    response:{
+                        statusName:'code', //规定返回的状态码字段为code
+                        statusCode:200 //规定成功的状态码味200
+                    }
+                });break;
+                case 5: table.render({
+                    elem: '#withdrawn-table'
+                    ,height: 520
+                    ,url: '/admin/repair/list' //数据接口
+                    ,page: true //开启分页
+                    ,where: {
+                        "status": 404,
+                        "staff.id": '[[${session.loginStaffId}]]'
+                    }
+                    ,cols: [
+                        [
+                            {field: 'id', width: 150, title: '工单编号', fixed: 'left'}
+                            ,{field: 'student', title: '学生姓名',templet: function(d){
+                                return d.student.name
+                            }}
+                            ,{field: 'student', title: '联系方式',templet: function(d){
+                                return d.student.phone
+                            }}
+                            ,{field: 'description', title: '问题描述'}
+                            ,{field: 'student', title: '宿舍楼',templet: function(d){
+                                return d.student.buildingName
+                            }}
+                            ,{field: 'student', title: '宿舍层',templet: function(d){
+                                return d.student.floor
+                            }}
+                            ,{field: 'student', title: '宿舍号',templet: function(d){
+                                return d.student.number
+                            }}
+                            ,{field: 'fee', title: '收费 单位:元'}
+                            ,{field: 'student', title: '状态',templet: function(d){
+                                return '<span class="layui-badge layui-bg-blue">'+statusShow(d.status)+'</span>'
+                            }}
+                            ,{fixed: 'right', title: '操作', width: 165, align:'center', toolbar: '#withdrawn-toolbar'}
+                        ]
+                    ]
+                    ,
+                    response:{
+                        statusName:'code', //规定返回的状态码字段为code
+                        statusCode:200 //规定成功的状态码味200
+                    }
+                });break;
+            }
+        });
+
+        function tabnavReload() {
+            $.ajax({
+                type : "GET",
+                dataType : "json",
+                url : "/admin/repair/count",
+                data: {
+                    "staffId": '[[${session.loginStaffId}]]'
+                },
+                success : function(data) {
+                    if(data.code==200){
+                        data=data.data
+                        data.forEach(function (item) {
+                            $("#"+item.status).html(item.count)
+                        })
+                    }
+                },
+                error : function (data) {
+                    console.log("请求失败")
+                }
+            });
+        }
+        function statusShow(status) {
+            switch (status) {
+                case 100: return "问题待确认";
+                case 101: return "问题待处理";
+                case 104: return "工单已取消";
+                case 200: return "待对方确认";
+                case 201: return "对方已确认";
+                case 202: return "工单申述中";
+                case 400: return "工单已结束";
+                case 404: return "工单待撤回";
+            }
+        }
+    });
+</script>
+</html>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.neepa.mapper.DormitoryMapper">
+    <select id="selectVoListByCondition" resultType="com.neepa.vo.DormitoryVO">
+        SELECT d.*,b.name as buildingName
+        FROM dormitory d
+        LEFT JOIN building b on d.building_id = b.id
+        <where>
+        <if test="buildingId != null">
+            AND d.building_id = #{buildingId}
+        </if>
+        <if test="floor != null">
+            AND d.floor = #{floor}
+        </if>
+        <if test="number != null">
+            AND d.number = #{number}
+        </if>
+    </where>
+</select>
+</mapper>

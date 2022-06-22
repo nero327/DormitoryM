@@ -1,0 +1,157 @@
+<!doctype html>
+<html  class="x-admin-sm" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragment/base::head(~{::title},~{},~{})}"></head>
+<title>宿舍管理系统</title>
+<body>
+<div class="layui-fluid">
+    <div class="layui-row">
+        <form class="layui-form">
+            <div class="layui-form-item">
+                <label for="id" class="layui-form-label">
+                    <span class="x-red">*</span>学号
+                </label>
+                <div class="layui-input-inline">
+                    <input type="text" id="id" name="id" disabled="disabled"
+                           autocomplete="off" class="layui-input" th:value="${student.getId()}">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label for="name" class="layui-form-label">
+                    <span class="x-red">*</span>姓名
+                </label>
+                <div class="layui-input-inline">
+                    <input type="text" id="name" name="name" required="" lay-verify="required"
+                           autocomplete="off" class="layui-input" th:value="${student.getName()}">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label for="sex" class="layui-form-label">
+                    <span class="x-red">*</span>性别
+                </label>
+                <div class="layui-input-inline">
+                    <select name="sex" id="sex">
+                        <option value="1" th:selected="${student.getSex()} eq '男'">男</option>
+                        <option value="0" th:selected="${student.getSex()} eq '女'">女</option>
+                    </select>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label for="phone" class="layui-form-label">
+                    <span class="x-red">*</span>联系方式
+                </label>
+                <div class="layui-input-inline">
+                    <input type="text" id="phone" name="phone" required="" lay-verify="required|number"
+                           autocomplete="off" class="layui-input" th:value="${student.getPhone()}">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label for="buildingId" class="layui-form-label">
+                    <span class="x-red">*</span>宿舍楼名称
+                </label>
+                <div class="layui-input-inline">
+                    <select name="buildingId" id="buildingId" lay-filter="building">
+                        <option value=""></option>
+                        <option th:each="building :${buildingList}" th:selected="${student.getBuildingId() eq building.getId()}" th:value="${building.getId()}">[[${building.getName()}]]</option>
+                    </select>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label for="floor" class="layui-form-label">
+                    <span class="x-red">*</span>宿舍楼层
+                </label>
+                <div class="layui-input-inline">
+                    <select name="floor" id="floor" lay-filter="floor" required="">
+                        <option th:value="${student.getFloor()}" selected>[[${student.getFloor()}]]</option>
+                    </select>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label for="number" class="layui-form-label">
+                    <span class="x-red">*</span>宿舍房号
+                </label>
+                <div class="layui-input-inline">
+                    <select name="number" id="number" lay-filter="number" required="">
+                        <option th:value="${student.getNumber()}" selected>[[${student.getNumber()}]]</option>
+                    </select>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label for="number" class="layui-form-label"></label>
+                <button type="button" class="layui-btn">修改</button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>layui.use(['form', 'layer'],
+    function() {
+        $ = layui.jquery;
+        var form = layui.form,
+            layer = layui.layer;
+
+        form.on('select(building)',function(data){
+            $.getJSON("/admin/dormitory/getFloorsByBuildingId?id="+data.value, function(data){
+                var optionstring = "";
+                for (let i = 1; i <= data.data; i++) {
+                    optionstring += "<option value=\"" + i + "\" >" + i + "</option>";
+                }
+                $("#floor").html('<option value=""></option>' + optionstring);
+                form.render('select'); //这个很重要
+            });
+        });
+
+        form.on('select(floor)',function(data){
+            $.getJSON("/admin/dormitory/getNumberByInfo?floor="+data.value+"&buildingId="+$("#buildingId").val(), function(data){
+                var optionstring = "";
+                data.data.forEach(function (ele,idx) {
+                    optionstring += "<option value=\"" + ele.number + "\" >---" + ele.number + "---可住："+ele.available+"人---已住："+(ele.max-ele.available)+"人---</option>";
+                })
+                $("#number").html('<option value=""></option>' + optionstring);
+                form.render('select'); //这个很重要
+            });
+        });
+
+        $('body').on('click','.layui-btn', function() {
+
+            $.ajax({
+                type : "PUT",
+                dataType : "json",
+                url : "/admin/student/"+[[${student.getId()}]],
+                data : {
+                    "id": $("#id").val(),
+                    "name": $("#name").val(),
+                    "sex": $("#sex").val(),
+                    "phone": $("#phone").val(),
+                    "buildingId": $("#buildingId").val(),
+                    "floor": $("#floor").val(),
+                    "number": $("#number").val(),
+                },
+                success : function(data) {
+                    console.log(data);
+                    if(data.code==200){
+                        layer.alert(data.msg, {
+                                icon: 1
+                            },
+                            function() {
+                                //关闭当前frame
+                                xadmin.close();
+                                // 可以对父窗口进行刷新
+                                xadmin.father_reload();
+                            });
+                    }else {
+                        layer.alert(data.msg, {
+                                icon: 2
+                            },
+                            function() {
+                                //关闭当前frame
+                                xadmin.close();
+                                // 可以对父窗口进行刷新
+                                xadmin.father_reload();
+                            });
+                    }
+                }
+            });
+        });
+
+    });</script>
+</body>
+</html>

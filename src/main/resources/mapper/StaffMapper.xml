@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.neepa.mapper.StaffMapper">
+    <select id="selectVoListByCondition" resultType="com.neepa.vo.StaffVO">
+        SELECT s.*,d.name as departmentName
+        FROM staff s, department d
+        WHERE
+            s.department_id=d.id
+            <if test=" id != null ">
+                AND s.id=#{id}
+            </if>
+            <if test=" !''.equals(name) ">
+                AND s.name LIKE '%${name}%'
+            </if>
+            <if test=" sex != null ">
+                AND s.sex=#{sex}
+            </if>
+            <if test=" !''.equals(phone) ">
+                AND s.phone=#{phone}
+            </if>
+            <if test=" departmentId != null ">
+                AND s.department_id=#{departmentId}
+            </if>
+    </select>
+</mapper>

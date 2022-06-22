@@ -1,0 +1,94 @@
+<!doctype html>
+<html  class="x-admin-sm" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragment/base::head(~{::title},~{},~{})}"></head>
+<title>宿舍管理系统</title>
+<body>
+<div class="layui-fluid">
+    <div class="layui-row">
+        <form class="layui-form">
+            <div class="layui-form-item">
+                <label for="buildingId" class="layui-form-label">
+                    <span class="x-red">*</span>所属宿舍楼
+                </label>
+                <div class="layui-input-inline">
+                    <select name="buildingId" id="buildingId" lay-filter="building" lay-verify="required">
+                        <option value="0"></option>
+                        <option th:each="building :${buildingList}" th:value="${building.getId()}">[[${building.getName()}]]</option>
+                    </select>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label for="floor" class="layui-form-label">
+                    <span class="x-red">*</span>宿舍楼层
+                </label>
+                <div class="layui-input-inline">
+                    <select name="floor" id="floor" lay-filter="floor" required="">
+                    </select>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label for="floor" class="layui-form-label"></label>
+                <button  class="layui-btn" lay-filter="add" lay-submit="">
+                    批量删除
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+    layui.use(['form', 'layer'],
+    function() {
+        $ = layui.jquery;
+        var form = layui.form,
+            layer = layui.layer;
+        form.on('select(building)',function(data){
+            $.getJSON("getFloorsByBuildingId?id="+data.value, function(data){
+                var optionstring = "";
+                for (let i = 1; i <= data.data; i++) {
+                    optionstring += "<option value=\"" + i + "\" >" + i + "</option>";
+                }
+                $("#floor").html('<option value=""></option>' + optionstring);
+                form.render('select'); //这个很重要
+            });
+        });
+        //监听提交
+        form.on('submit(add)',
+            function() {
+                $.ajax({
+                    type : "DELETE",
+                    dataType : "json",
+                    url : "/admin/dormitory/delete",
+                    data : {
+                        "buildingId": $("#buildingId").val(),
+                        "floor": $("#floor").val(),
+                    },
+                    success : function(data) {
+                        console.log(data);
+                        if(data.code==200){
+                            layer.alert(data.msg, {
+                                    icon: 1
+                                },
+                                function() {
+                                    //关闭当前frame
+                                    xadmin.close();
+                                    // 可以对父窗口进行刷新
+                                    xadmin.father_reload();
+                                });
+                        }else {
+                            layer.alert(data.msg, {
+                                    icon: 2
+                                },
+                                function() {
+                                    //关闭当前frame
+                                    xadmin.close();
+                                    // 可以对父窗口进行刷新
+                                    xadmin.father_reload();
+                                });
+                        }
+                    }
+                });
+                return false;
+            });
+    });</script>
+</body>
+</html>

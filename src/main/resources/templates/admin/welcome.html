@@ -1,0 +1,20 @@
+<!doctype html>
+<html  class="x-admin-sm" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragment/base::head(~{::title},~{},~{})}"></head>
+<title>宿舍管理系统</title>
+<body>
+<div class="layui-fluid">
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-body ">
+                    <blockquote class="layui-elem-quote">欢迎管理员
+                        <span class="x-red">[[${session.loginStaffName}]]</span>
+                    </blockquote>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
